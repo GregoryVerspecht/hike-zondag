@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hike zondag</title>
+<style>
+  /* Layout: vote board — morning plan, info cards, a personal top-3 ballot you reorder, and a live group result */
+  :root{
+    --bg:#f3f1ea; --surface:#fffdf8; --surface-2:#edeadf;
+    --fg:#1e2a22; --muted:#5e6b61; --line:#e0ddd1;
+    --accent:#2f6b4f; --accent-soft:#deeae1;
+    --gold:#b8862f;
+    --hk:#4a7c59; --jambon:#b4673a; --nismes:#56688c;
+    --ring: rgba(47,107,79,.35);
+    --shadow: 0 1px 2px rgba(31,42,34,.06), 0 6px 20px rgba(31,42,34,.06);
+    --dsp:"Fraunces", Georgia, serif;
+    --body:"Hanken Grotesk", system-ui, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --bg:#13160f; --surface:#1b1f16; --surface-2:#232819;
+    --fg:#edefe6; --muted:#a3ad9f; --line:#2e3426;
+    --accent:#74b78e; --accent-soft:#23312a; --gold:#d6a84e;
+    --hk:#73a981; --jambon:#d08a5e; --nismes:#8699c2;
+    --ring: rgba(116,183,142,.4);
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#13160f; --surface:#1b1f16; --surface-2:#232819;
+    --fg:#edefe6; --muted:#a3ad9f; --line:#2e3426;
+    --accent:#74b78e; --accent-soft:#23312a; --gold:#d6a84e;
+    --hk:#73a981; --jambon:#d08a5e; --nismes:#8699c2;
+    --ring: rgba(116,183,142,.4);
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+  body{background:var(--bg); color:var(--fg); font-family:var(--body); font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased}
+  .wrap{max-width:560px; margin:0 auto; padding-inline:18px; padding-block:26px 40px}
+
+  header{margin-bottom:22px}
+  .eyebrow{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); font-weight:600}
+  h1{font-family:var(--dsp); font-weight:600; font-size:clamp(30px,8vw,40px); line-height:1.02; margin:.18em 0 .12em; text-wrap:balance}
+  .sub{color:var(--muted); font-size:14.5px}
+
+  .panel{background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow)}
+  .sechead{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:600; margin:0 2px 11px}
+
+  /* morning */
+  .morning{padding:15px 16px 16px; margin-bottom:18px}
+  .morning .lbl{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:12px}
+  .tl{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px}
+  .tl li{display:grid; grid-template-columns:94px 1fr; gap:12px; align-items:baseline; font-size:13.5px; min-width:0}
+  .tl .t{font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; font-size:12px; letter-spacing:.01em}
+  .opt .tl .t{color:var(--c)}
+  .tl .ev{color:var(--fg)}
+
+  /* info cards */
+  .block-label{font-family:var(--dsp); font-size:15px; font-weight:600; color:var(--muted); margin:26px 2px 13px; letter-spacing:.01em}
+  .opts{display:flex; flex-direction:column; gap:14px}
+  .opt{padding:15px 16px 15px; position:relative; overflow:hidden; border-left:4px solid var(--c)}
+  .opt.hk{--c:var(--hk)} .opt.jambon{--c:var(--jambon)} .opt.nismes{--c:var(--nismes)}
+  .opt h2{font-family:var(--dsp); font-size:20px; font-weight:600; margin:0 0 3px; line-height:1.12}
+  .opt .meta{font-size:12.5px; color:var(--muted); font-weight:600}
+  .opt .meta .d{color:var(--c)}
+  .opt .detail{font-size:13.5px; color:var(--fg); margin:9px 0 0; opacity:.9}
+  .opt .links{margin-top:9px; display:flex; flex-wrap:wrap; gap:6px 14px}
+  .opt .links a{font-size:12.5px; color:var(--c); font-weight:600; text-decoration:none; border-bottom:1.5px solid transparent}
+  .opt .links a:hover{border-bottom-color:currentColor}
+  .plan-wrap{margin-top:12px; border-top:1px dashed var(--line); padding-top:12px}
+  .plan-wrap .ph{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:11px}
+
+  /* identity */
+  .who{padding:16px 16px 17px; margin-bottom:18px}
+  .who .lbl{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:11px}
+  .names{display:flex; flex-wrap:wrap; gap:9px}
+  .name-chip{appearance:none; cursor:pointer; font:inherit; font-size:14.5px; font-weight:600;
+    padding:9px 15px; border-radius:999px; border:1.5px solid var(--line); background:var(--surface-2); color:var(--fg);
+    display:inline-flex; align-items:center; gap:8px; transition:.15s}
+  .name-chip .dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11.5px;font-weight:700;background:var(--accent);color:#fff;font-family:var(--body)}
+  .name-chip[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 3px var(--ring)}
+  .name-chip .vd{font-size:11px;color:var(--accent);font-weight:700}
+
+  /* ballot */
+  .ballot{padding:16px 16px 17px; margin-bottom:18px}
+  .ballot .hint{font-size:13px; color:var(--muted); margin:0 0 13px}
+  .ballot.locked{opacity:.55; pointer-events:none}
+  .rank-list{display:flex; flex-direction:column; gap:9px}
+  .rank-row{display:flex; align-items:center; gap:11px; padding:11px 12px; border:1.5px solid var(--line); border-radius:12px; background:var(--surface-2); border-left:4px solid var(--c)}
+  .rank-row.hk{--c:var(--hk)} .rank-row.jambon{--c:var(--jambon)} .rank-row.nismes{--c:var(--nismes)}
+  .rank-badge{width:28px;height:28px;flex:none;border-radius:50%;display:grid;place-items:center;font-family:var(--dsp);font-weight:600;font-size:15px;color:#fff;background:var(--c)}
+  .rank-row .rn{min-width:0; flex:1}
+  .rank-row .rn .nm{font-weight:700; font-size:14.5px}
+  .rank-row .rn .mt{font-size:11.5px; color:var(--muted); font-weight:600}
+  .arrows{display:flex; flex-direction:column; gap:3px; flex:none}
+  .arrows button{appearance:none;cursor:pointer;width:30px;height:21px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;font-size:11px;line-height:1;display:grid;place-items:center;transition:.12s}
+  .arrows button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .arrows button:disabled{opacity:.3;cursor:not-allowed}
+  .confirm{margin-top:14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .confirm button{appearance:none;cursor:pointer;font:inherit;font-weight:700;font-size:14px;padding:11px 20px;border-radius:11px;border:none;background:var(--accent);color:#fff;transition:.15s}
+  .confirm button:hover{filter:brightness(1.06)}
+  .confirm button:disabled{opacity:.45;cursor:not-allowed}
+  .confirm .saved{font-size:12.5px;color:var(--accent);font-weight:600}
+  .confirm .unsaved{font-size:12.5px;color:var(--jambon);font-weight:600}
+
+  /* results */
+  .result{padding:17px 16px 18px}
+  .winner{display:flex; align-items:center; gap:12px; padding:13px 14px; border-radius:12px; background:var(--accent-soft); margin-bottom:16px}
+  .winner .crown{font-size:24px; flex:none}
+  .winner .wt{font-size:12px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .winner .wn{font-family:var(--dsp); font-size:21px; font-weight:600; line-height:1.1; color:var(--accent)}
+  .winner.empty{background:var(--surface-2)}
+  .winner.empty .wn{color:var(--muted); font-size:16px}
+  .res-row{display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--line)}
+  .res-row:first-of-type{border-top:none}
+  .res-pos{font-family:var(--dsp); font-size:17px; font-weight:600; color:var(--muted); width:20px; text-align:center; flex:none; font-variant-numeric:tabular-nums}
+  .res-mid{flex:1; min-width:0}
+  .res-mid .rl{display:flex; justify-content:space-between; align-items:baseline; gap:10px}
+  .res-mid .nm{font-weight:700; font-size:14.5px; color:var(--c)}
+  .res-mid .pts{font-family:var(--dsp); font-weight:600; font-size:15px; color:var(--fg); font-variant-numeric:tabular-nums; flex:none}
+  .res-mid .pts small{font-family:var(--body); font-size:11px; color:var(--muted); font-weight:600; letter-spacing:.04em}
+  .rbar{height:7px; border-radius:99px; background:var(--surface-2); overflow:hidden; margin-top:7px}
+  .rbar > i{display:block; height:100%; width:0; background:var(--c); border-radius:99px; transition:width .5s cubic-bezier(.2,.7,.2,1)}
+  .res-row.hk{--c:var(--hk)} .res-row.jambon{--c:var(--jambon)} .res-row.nismes{--c:var(--nismes)}
+  .firsts{font-size:11.5px; color:var(--muted); margin-top:5px}
+
+  .status{margin:16px 2px 0; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  .tally{font-size:13.5px; color:var(--fg)}
+  .tally b{font-family:var(--dsp)}
+  .missing{font-size:12.5px; color:var(--muted); margin-top:2px}
+  .conn{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--muted)}
+  .conn .d{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+  .conn.ok .d{background:var(--accent)}
+  .conn.err .d{background:var(--jambon)}
+
+  .note{margin-top:22px; font-size:12px; color:var(--muted); line-height:1.5; border-top:1px solid var(--line); padding-top:14px}
+
+  :focus-visible{outline:3px solid var(--ring); outline-offset:2px; border-radius:8px}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Groepsbeslissing</div>
+    <h1>Welke hike zondag?</h1>
+    <div class="sub">Zondag 11 oktober · zet de drie op volgorde van jouw voorkeur — de groepswinnaar rolt er automatisch uit.</div>
+  </header>
+
+  <section class="panel morning">
+    <div class="lbl">Samen starten</div>
+    <ul class="tl">
+      <li><span class="t">09:00</span><span class="ev">Verzamelen bij Eline</span></li>
+      <li><span class="t">09:00–09:30</span><span class="ev">Langs de bakker + eten en picknick inslaan</span></li>
+      <li><span class="t">09:30</span><span class="ev">Vertrekken — samen rijden</span></li>
+    </ul>
+  </section>
+
+  <div class="block-label">De drie opties</div>
+  <div class="opts" id="opts"></div>
+
+  <div class="block-label">Jouw stem</div>
+  <section class="panel who">
+    <div class="lbl">Wie ben jij?</div>
+    <div class="names" id="names"></div>
+  </section>
+
+  <section class="panel ballot" id="ballot">
+    <div class="sechead" id="ballotHead">Jouw top 3</div>
+    <p class="hint" id="ballotHint">Kies eerst je naam hierboven om je voorkeur te geven.</p>
+    <div class="rank-list" id="rankList"></div>
+    <div class="confirm" id="confirmWrap" hidden>
+      <button id="confirmBtn">Bevestig mijn top 3</button>
+      <span id="confirmState"></span>
+    </div>
+  </section>
+
+  <div class="block-label">Uitslag</div>
+  <section class="panel result">
+    <div class="winner" id="winner"></div>
+    <div id="resRows"></div>
+    <div class="status">
+      <div>
+        <div class="tally" id="tally"><b>0</b>/4 gestemd</div>
+        <div class="missing" id="missing"></div>
+      </div>
+      <div class="conn" id="conn"><span class="d"></span><span id="connTxt">Verbinden…</span></div>
+    </div>
+  </section>
+
+  <p class="note">
+    Deel de link met Nikita, Silke, Eline en Greg — openen kan zonder account. Elke telefoon onthoudt wie je bent.
+    Punten: je 1e keuze = 3 pt, 2e = 2 pt, 3e = 1 pt. De optie met de meeste punten wint; bij gelijkspel telt wie de meeste 1e-plaatsen heeft.
+  </p>
+</div>
+
+<script>
+const SB_URL = "https://djrujxlatefgigmoojtc.supabase.co";
+const SB_KEY = "sb_publishable_7Edn65WiwxhUBLNn95LQWA_It8yQVN6";
+const REST = SB_URL + "/rest/v1/hike_votes";
+const HEAD = { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY };
+
+const VOTERS = ["Nikita","Silke","Eline","Greg"];
+const OPTIONS = [
+  { id:"hoge_kempen", cls:"hk", name:"Hoge Kempen", short:"~1u10 · makkelijk", meta:"~1u10 · 14° zonnig",
+    detail:"Twee gekleurde lussen vanaf de poort: gele lange lus in Terhills (mijnterrils, meren, uitkijktoren) of de paarse Top Trail Mechelse Heide (11 km, heide + panoramapunt). Vlak en makkelijk.",
+    plan:[["~10:40","Aankomst poort (Terhills of Mechelse Heide)"],["10:45–14:00","Wandelen 11–16 km + picknickpauze onderweg"],["14:00","Koffie of pint op het terras"],["~15:45","Terug thuis — ruim op tijd"]],
+    links:[["Terhills","https://www.nationaalparkhogekempen.be/nl/toegangspoort/terhills"],["Mechelse Heide","https://www.nationaalparkhogekempen.be/nl/toegangspoorten/mechelse-heide"]] },
+  { id:"jambon", cls:"jambon", name:"Jambon de la Semois", short:"~2u30 · keuze lus", meta:"~2u30 · 12° bewolkt",
+    detail:"Naar het hamvormige rivier-uitzicht van de Semois — het mooiste panorama van de drie. Twee lusmaten: de grote Orchimont-lus (15,6 km, gemiddeld, 370 hm) of een kortere lus (~9,7 km, zwaar en rotsig, 210 hm) langs het ham-uitzicht, de gebroken brug en het strandje van Membre.",
+    plan:[["~12:00","Aankomst startpunt"],["12:00–16:30","Grote lus 15,6 km — of korte lus ~9,7 km (tot ~15:00)"],["~17:00","Iets drinken in het dorp"],["~19:30","Terug thuis — volle dag"]],
+    links:[["Grote lus 15,6 km","https://www.komoot.com/nl-NL/tour/3340114123?share_token=aD2ZUK8OaUzJoOE2XzX9nPfqt3CiXpRX3eSJDH6IvZV06GBT81"],["Korte lus 9,7 km","https://www.komoot.com/nl-nl/smarttour/e1711025702"]] },
+  { id:"nismes", cls:"nismes", name:"Nismes – Eau Noire", short:"~2u10 · zwaar", meta:"~2u10 · 13° bewolkt",
+    detail:"Vaste lus van 15,2 km, zwaar (~5u). Langs kasteelruïne Dourbes, uitzichtpunt Falkenstein en de kloof Fondry des Chiens. Afwisselend en avontuurlijk.",
+    plan:[["~11:40","Aankomst parking Nismes"],["11:45–16:45","Zware lus 15,2 km (~5u) + pauzes aan de uitzichten"],["~17:15","Nog iets drinken"],["~19:30","Terug thuis — volle dag"]],
+    links:[["Komoot-route","https://www.komoot.com/nl-NL/tour/3339911742?share_token=a1Qyahj3sJM6Or8nT3Odsrb85hPTnPgnToXClkP06DcFKID8Sz"]] }
+];
+const OPT = Object.fromEntries(OPTIONS.map(o=>[o.id,o]));
+const PTS = [3,2,1];
+
+let me = null;
+let ballots = {};      // voter -> [id,id,id]
+let myRank = OPTIONS.map(o=>o.id);  // working order for current user
+let touched = false;   // true once the user reorders but hasn't saved
+let pending = false;
+
+try { me = localStorage.getItem("hikevote_me"); } catch(e){}
+if (me && !VOTERS.includes(me)) me = null;
+
+const $ = s => document.querySelector(s);
+const initials = n => n.slice(0,1).toUpperCase();
+
+function buildOptions(){
+  const root = $("#opts"); root.innerHTML = "";
+  for (const o of OPTIONS){
+    const el = document.createElement("section");
+    el.className = "panel opt " + o.cls;
+    el.innerHTML = `
+      <h2>${o.name}</h2>
+      <div class="meta">${o.meta.replace("·",'<span class="d">·</span>')}</div>
+      <p class="detail">${o.detail}</p>
+      <div class="links">${o.links.map(l=>`<a href="${l[1]}" target="_blank" rel="noopener">${l[0]} ↗</a>`).join("")}</div>
+      <div class="plan-wrap"><div class="ph">Zo verloopt de dag</div>
+        <ul class="tl">${o.plan.map(p=>`<li><span class="t">${p[0]}</span><span class="ev">${p[1]}</span></li>`).join("")}</ul>
+      </div>`;
+    root.appendChild(el);
+  }
+}
+
+function buildNames(){
+  const root = $("#names"); root.innerHTML = "";
+  for (const n of VOTERS){
+    const b = document.createElement("button");
+    b.className = "name-chip";
+    b.setAttribute("aria-pressed", me===n ? "true":"false");
+    b.innerHTML = `<span class="dot">${initials(n)}</span>${n}<span class="vd" data-ndot="${n}"></span>`;
+    b.onclick = ()=>{
+      me = (me===n? null : n);
+      try{ me? localStorage.setItem("hikevote_me",me):localStorage.removeItem("hikevote_me"); }catch(e){}
+      myRank = (me && ballots[me]) ? ballots[me].slice() : OPTIONS.map(o=>o.id);
+      touched = false;
+      renderNames(); renderBallot(); renderResults();
+    };
+    root.appendChild(b);
+  }
+}
+
+function renderNames(){
+  document.querySelectorAll(".name-chip").forEach((b,i)=>{
+    const n = VOTERS[i];
+    b.setAttribute("aria-pressed", me===n?"true":"false");
+    b.querySelector("[data-ndot]").textContent = ballots[n] ? "✓" : "";
+  });
+}
+
+function sameOrder(a,b){ return a && b && a.length===b.length && a.every((x,i)=>x===b[i]); }
+
+function renderBallot(){
+  const ballot = $("#ballot"), list = $("#rankList"), cw = $("#confirmWrap");
+  if (!me){
+    ballot.classList.add("locked");
+    $("#ballotHint").textContent = "Kies eerst je naam hierboven om je voorkeur te geven.";
+    list.innerHTML = ""; cw.hidden = true; return;
+  }
+  ballot.classList.remove("locked");
+  $("#ballotHead").textContent = "Jouw top 3 — " + me;
+  $("#ballotHint").textContent = "Zet met de pijltjes de opties op volgorde van jouw voorkeur, en bevestig.";
+  list.innerHTML = "";
+  myRank.forEach((id,i)=>{
+    const o = OPT[id];
+    const row = document.createElement("div");
+    row.className = "rank-row " + o.cls;
+    row.innerHTML = `
+      <div class="rank-badge">${i+1}</div>
+      <div class="rn"><div class="nm">${o.name}</div><div class="mt">${o.short}</div></div>
+      <div class="arrows">
+        <button data-up="${i}" ${i===0?"disabled":""} aria-label="Omhoog">▲</button>
+        <button data-down="${i}" ${i===myRank.length-1?"disabled":""} aria-label="Omlaag">▼</button>
+      </div>`;
+    list.appendChild(row);
+  });
+  cw.hidden = false;
+  const saved = ballots[me];
+  const isSaved = sameOrder(saved, myRank);
+  $("#confirmBtn").disabled = isSaved;
+  $("#confirmBtn").textContent = saved ? "Voorkeur bijwerken" : "Bevestig mijn top 3";
+  const st = $("#confirmState");
+  if (isSaved) st.className="saved", st.textContent="✓ Opgeslagen";
+  else if (saved) st.className="unsaved", st.textContent="Wijziging nog niet opgeslagen";
+  else st.className="unsaved", st.textContent="Nog niet gestemd";
+}
+
+$("#rankList").addEventListener("click", e=>{
+  const up = e.target.closest("[data-up]"), dn = e.target.closest("[data-down]");
+  if (up){ const i=+up.getAttribute("data-up"); [myRank[i-1],myRank[i]]=[myRank[i],myRank[i-1]]; touched=true; renderBallot(); }
+  else if (dn){ const i=+dn.getAttribute("data-down"); [myRank[i+1],myRank[i]]=[myRank[i],myRank[i+1]]; touched=true; renderBallot(); }
+});
+$("#confirmBtn").addEventListener("click", ()=> cast(myRank.slice()));
+
+function computeResults(){
+  const pts = Object.fromEntries(OPTIONS.map(o=>[o.id,0]));
+  const firsts = Object.fromEntries(OPTIONS.map(o=>[o.id,0]));
+  let n = 0;
+  for (const v of VOTERS){
+    const r = ballots[v]; if (!r) continue; n++;
+    r.forEach((id,i)=>{ if (pts[id]!==undefined){ pts[id]+=PTS[i]; if(i===0) firsts[id]++; } });
+  }
+  const ranked = OPTIONS.map(o=>({ id:o.id, pts:pts[o.id], firsts:firsts[o.id] }))
+    .sort((a,b)=> b.pts-a.pts || b.firsts-a.firsts);
+  return { ranked, n, maxPts: Math.max(1, ...Object.values(pts)) };
+}
+
+function renderResults(){
+  const { ranked, n, maxPts } = computeResults();
+  const w = $("#winner");
+  if (n===0){
+    w.className = "winner empty";
+    w.innerHTML = `<div class="crown">🗳️</div><div><div class="wt">Nog geen stemmen</div><div class="wn">De uitslag verschijnt hier</div></div>`;
+  } else {
+    const top = ranked[0], tie = ranked[1] && ranked[1].pts===top.pts && ranked[1].firsts===top.firsts;
+    w.className = "winner";
+    if (tie){
+      const names = ranked.filter(r=>r.pts===top.pts && r.firsts===top.firsts).map(r=>OPT[r.id].name).join(" & ");
+      w.innerHTML = `<div class="crown">🤝</div><div><div class="wt">Gelijkspel${n<4?" (tot nu toe)":""}</div><div class="wn">${names}</div></div>`;
+    } else {
+      w.innerHTML = `<div class="crown">🏆</div><div><div class="wt">${n<4?"Leidt nu":"Groepskeuze"}</div><div class="wn">${OPT[top.id].name}</div></div>`;
+    }
+  }
+  const rows = $("#resRows"); rows.innerHTML = "";
+  ranked.forEach((r,i)=>{
+    const o = OPT[r.id];
+    const row = document.createElement("div");
+    row.className = "res-row " + o.cls;
+    row.innerHTML = `
+      <div class="res-pos">${i+1}</div>
+      <div class="res-mid">
+        <div class="rl"><span class="nm">${o.name}</span><span class="pts">${r.pts} <small>pt</small></span></div>
+        <div class="rbar"><i style="width:${r.pts/maxPts*100}%"></i></div>
+        <div class="firsts">${r.firsts} × als 1e keuze</div>
+      </div>`;
+    rows.appendChild(row);
+  });
+  $("#tally").innerHTML = `<b>${n}</b>/4 gestemd`;
+  const missing = VOTERS.filter(v=>!ballots[v]);
+  $("#missing").textContent = missing.length ? "Nog niet: " + missing.join(", ") : "Iedereen heeft gestemd 🎉";
+}
+
+function setConn(state, txt){ const c=$("#conn"); c.className="conn "+state; $("#connTxt").textContent=txt; }
+
+function normalize(rows){
+  const next = {};
+  for (const row of rows){
+    if (!VOTERS.includes(row.voter)) continue;
+    let r = row.ranking;
+    if (typeof r === "string") r = r.replace(/^\{|\}$/g,"").split(",").map(s=>s.replace(/^"|"$/g,""));
+    if (Array.isArray(r) && r.length===3) next[row.voter] = r;
+  }
+  return next;
+}
+
+async function refresh(){
+  try{
+    const res = await fetch(REST + "?select=voter,ranking", { headers: HEAD, cache:"no-store" });
+    if (!res.ok) throw new Error("HTTP "+res.status);
+    const next = normalize(await res.json());
+    if (pending) next[me] = ballots[me];   // keep in-flight optimistic update
+    ballots = next;
+    if (me && !touched) myRank = ballots[me] ? ballots[me].slice() : OPTIONS.map(o=>o.id);
+    renderNames(); renderResults(); renderBallot();
+    setConn("ok","Live");
+  }catch(err){ setConn("err","Geen verbinding — probeer te herladen"); }
+}
+
+async function cast(ranking){
+  if (!me) return;
+  ballots[me] = ranking; touched = false; pending = true; renderBallot(); renderResults(); renderNames();
+  try{
+    const res = await fetch(REST + "?on_conflict=voter", {
+      method:"POST",
+      headers: Object.assign({}, HEAD, { "Content-Type":"application/json", "Prefer":"resolution=merge-duplicates,return=minimal" }),
+      body: JSON.stringify({ voter: me, ranking: ranking, updated_at: new Date().toISOString() })
+    });
+    if (!res.ok) throw new Error("HTTP "+res.status);
+    setConn("ok","Live");
+  }catch(err){ setConn("err","Stem niet opgeslagen — probeer opnieuw"); }
+  finally{ pending = false; refresh(); }
+}
+
+buildOptions();
+buildNames();
+renderBallot();
+renderResults();
+refresh();
+setInterval(()=>{ if(!pending) refresh(); }, 3500);
+</script>
+</body>
+</html>
